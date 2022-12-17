@@ -1,1 +1,1 @@
-# -boolean-benchmark-reader
+# boolean-benchmark-reader
