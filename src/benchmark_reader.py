@@ -1,7 +1,172 @@
-from os import path
-import array
-from dataclasses import dataclass
+"""
+Provides a reader that can be used as an interface for the benchmarks of the General Boolean Function Benchmark Suite (GBFS):
+https://dl.acm.org/doi/abs/10.1145/3594805.3607131
 
+The architecture is based on three classes implemented in the file
+- TruthTable: Dataclass to represent a compressed or uncompressed truth table
+- Benchmark: Represent a logic synthesis benchmark with a truth table and meta information
+- BenchmarkReader: Reads and stores the actual data of a given benchmark file
+"""
+
+from os import path
+from dataclasses import dataclass
+import array
+
+__author__ = "Roman Kalkreuth"
+
+@dataclass
+class TruthTable:
+    """
+    Class for representing a compressed or uncompressed truth table.
+    Input and outputs are stores row-wise in two-dimensional vectors.
+    """
+    inputs: list
+    outputs: list
+    input_names: list
+    output_names: list
+    compressed: bool
+
+    def __init__(self):
+        self.inputs = []
+        self.outputs = []
+
+        self.input_names = []
+        self.output_names = []
+
+        self.compressed = False
+
+    def clear(self):
+        """
+        Clears the vectors of the input and output vectors.
+
+        :return: None
+        """
+        self.inputs.clear()
+        self.outputs.clear()
+        self.input_names.clear()
+        self.output_names.clear()
+
+class Benchmark:
+    """
+
+    """
+    def __init__(self):
+        self.table = TruthTable()
+
+        # Variables for the meta information of a certain benchmark
+        self.num_inputs = -1
+        self.num_outputs = -1
+        self.num_chunks = -1
+        self.num_product_terms = -1
+        self.model_name = ""
+
+    def clear(self) -> None:
+        """
+        Clears the truth table
+
+        :return: None
+        """
+        self.table.clear()
+
+    def rows(self) -> int:
+        """
+        Return the number of rows of the table.
+
+        :return: Number of rows.
+        """
+        return len(self.table.inputs)
+
+    def append_inputs(self, input_row: list) -> None:
+        """
+        Appends a new input row vector to the inputs.
+        Validates the input row vector by using assert.
+        The input row vector must be not None and non-empty.
+
+        :param input_row: Vector containing a row of inputs
+        :return: None
+        """
+        assert input_row is not None and len(input_row) > 0, "Input row vector is" \
+                                                             "None or empty!"
+        self.table.inputs.append(input_row)
+
+    def append_outputs(self, output_row: list) -> None:
+        """
+        Appends a new output row vector to the outputs.
+        Validates the output row vector by using assert.
+        The output row vector must be not None and non-empty.
+
+        :param output_row: Vector containing a row of outputs
+        :return: None
+        """
+        assert output_row is not None and len(output_row) > 0, "Output row vector is " \
+                                                               "None or emtpy!"
+        self.table.outputs.append(output_row)
+
+    def get_inputs_at(self, index: int) -> list:
+        """
+        Returns a row of inputs at a specific index.
+        Validates the index by using assert. The index
+        must be in the interval 0 <= index <= max_index.
+
+        :param index: index of the row
+        :return: Vector containing a row of inputs
+        """
+        max_index = len(self.inputs)
+        assert 0 <= index <= max_index, "Index is out of range!"
+        return self.table.inputs[index]
+
+    def get_outputs_at(self, index: int) -> list:
+        """
+        Returns a row of outputs at a specific index.
+        Validates the index by using assert. The index
+        must be in the interval 0 <= index <= max_index.
+
+        :param index: index of the row
+        :return: Vector containing a row of outputs
+        """
+        max_index = len(self.table.outputs)
+        assert 0 <= index <= max_index, "Index is out of range!"
+        return self.table.outputs[index]
+
+    def print_input_names(self) -> None:
+        print("Input names: ", end="")
+        for name in self.table.input_names:
+            print(name + " ", end="")
+
+        print("")
+
+    def print_output_names(self) -> None:
+        print("Output names: ", end="")
+        for name in self.table.output_names:
+            print(name + " ", end="")
+
+        print('')
+
+    def print(self) -> None:
+        """
+        Print the table row-wise.
+
+        :return: None
+        """
+        # Get the number of rows
+        num_rows = self.rows()
+
+        # Iterate over the number of rows
+        for i in range(num_rows):
+
+            # Print the inputs that are stored in the current
+            # input row vector
+            for input_row in self.table.inputs[i]:
+                print(input_row + ' ', end='')
+
+            # Separate inputs and outs with whitespace
+            print("   ", end="")
+
+            # Print the outputs of the current row then
+            for output_row in self.table.outputs[i]:
+                print(output_row + ' ', end='')
+
+            print('')
 
 class BenchmarkReader:
     """
@@ -139,13 +304,13 @@ class BenchmarkReader:
 
     def read_input_names(self) -> None:
         line_values = self.read_names(".ilb")
-        self.benchmark.input_names = list(line_values)
-        self.benchmark.input_names.pop()
+        self.benchmark.table.input_names = list(line_values)
+        self.benchmark.table.input_names.pop()
 
     def read_output_names(self) -> None:
         line_values = self.read_names(".ob")
-        self.benchmark.output_names = list(line_values)
-        self.benchmark.output_names.pop()
+        self.benchmark.table.output_names = list(line_values)
+        self.benchmark.table.output_names.pop()
 
     def read_header(self) -> None:
         self.header_size = 0
@@ -167,35 +332,35 @@ class BenchmarkReader:
 
         self.read_input_names()
 
-        if len(self.benchmark.input_names) > 0:
+        if len(self.benchmark.table.input_names) > 0:
             self.header_size += 1
 
         self.read_output_names()
 
-        if len(self.benchmark.output_names) > 0:
+        if len(self.benchmark.table.output_names) > 0:
             self.header_size += 1
 
     def print_header(self) -> None:
         if len(self.model_name) > 0:
-            print("Model: " + self.model_name)
+            print("Model: %s ", (self.model_name))
 
         if self.num_inputs != -1:
-            print("Inputs: " + self.num_inputs)
+            print("Inputs: %d", (self.num_inputs))
 
         if self.num_outputs != -1:
-            print("Outputs: " + self.num_outputs)
+            print("Outputs: %d", (self.num_outputs))
 
-        if len(self.benchmark.input_names) > 0:
+        if len(self.benchmark.table.input_names) > 0:
             self.benchmark.print_input_names()
 
-        if len(self.benchmark.output_names) > 0:
+        if len(self.benchmark.table.output_names) > 0:
             self.benchmark.print_output_names()
 
     def read_tt_file(self, file_path: str) -> None:
         # Determine the file format
         file_format = self.file_format(file_path)
 
-        self.benchmark.compressed = False
+        self.benchmark.table.compressed = False
         self.file.seek(0)
 
         input_row = []
@@ -316,160 +481,3 @@ class BenchmarkReader:
         :return: None
         """
         self.benchmark.print()
-
-
-class Benchmark:
-    """
-    Class for representing a compressed or uncompressed truth table.
-    Input and outputs are stores row-wise in two-dimensional vectors.
-    """
-
-    def __init__(self):
-        self.compressed = False
-
-        self.inputs = []
-        self.outputs = []
-
-        self.input_names = []
-        self.output_names = []
-
-        # Variables for the meta information of a certain benchmark
-        self.num_inputs = -1
-        self.num_outputs = -1
-        self.num_chunks = -1
-        self.num_product_terms = -1
-        self.model_name = ""
-
-    def clear(self) -> None:
-        """
-        Clears the vectors of the input and output vectors.
-
-        :return: None
-        """
-        self.num_inputs.clear()
-        self.output.clear()
-
-    def rows(self) -> int:
-        """
-        Return the number of rows of the table.
-
-        :return: Number of rows.
-        """
-        return len(self.inputs)
-
-    def append_inputs(self, input_row: list) -> None:
-        """
-        Appends a new input row vector to the inputs.
-        Validates the input row vector by using assert.
-        The input row vector must be not None and non-empty.
-
-        :param input_row: Vector containing a row of inputs
-        :return: None
-        """
-        assert input_row is not None and len(input_row) > 0, "Input row vector is" \
-                                                             "None or empty!"
-        self.inputs.append(input_row)
-
-    def append_outputs(self, output_row: list) -> None:
-        """
-        Appends a new output row vector to the outputs.
-        Validates the output row vector by using assert.
-        The output row vector must be not None and non-empty.
-
-        :param output_row: Vector containing a row of outputs
-        :return: None
-        """
-        assert output_row is not None and len(output_row) > 0, "Output row vector is " \
-                                                               "None or emtpy!"
-        self.outputs.append(output_row)
-
-    def get_inputs_at(self, index: int) -> list:
-        """
-        Returns a row of inputs at a specific index.
-        Validates the index by using assert. The index
-        must be in the interval 0 <= index <= max_index.
-
-        :param index: index of the row
-        :return: Vector containing a row of inputs
-        """
-        max_index = len(self.inputs)
-        assert 0 <= index <= max_index, "Index is out of range!"
-        return self.inputs[index]
-
-    def get_outputs_at(self, index: int) -> list:
-        """
-        Returns a row of outputs at a specific index.
-        Validates the index by using assert. The index
-        must be in the interval 0 <= index <= max_index.
-
-        :param index: index of the row
-        :return: Vector containing a row of outputs
-        """
-        max_index = len(self.outputs)
-        assert 0 <= index <= max_index, "Index is out of range!"
-        return self.outputs[index]
-
-    def print_input_names(self) -> None:
-        """
-
-        :return:
-        """
-        print("Input names: ", end="")
-        for name in self.input_names:
-            print(name + " ", end="")
-
-        print("")
-
-    def print_output_names(self) -> None:
-        """
-
-        :return
-        """
-        print("Output names: ", end="")
-        for name in self.output_names:
-            print(name + " ", end="")
-
-        print("")
-
-    def print(self) -> None:
-        """
-        Print the table row-wise.
-
-        :return: None
-        """
-        # Get the number of rows
-        num_rows = self.rows()
-
-        # Iterate over the number of rows
-        for i in range(num_rows):
-
-            # Print the inputs that are stored in the current
-            # input row vector
-            for input_row in self.inputs[i]:
-                print(input_row + ' ', end='')
-
-            # Separate inputs and outs with whitespace
-            print("   ", end="")
-
-            # Print the outputs of the current row then
-            for output_row in self.outputs[i]:
-                print(output_row + ' ', end='')
-
-            print('')
-
-@dataclass
-class TruthTable:
-    inputs: list
-    outputs: list
-    input_names: list
-    output_names: list
-    compressed: bool
-
-    def __init__(self):
-        self.inputs = []
-        self.outputs = []
-
-        self.input_names = []
-        self.output_names = []
-
-        self.compressed = False
