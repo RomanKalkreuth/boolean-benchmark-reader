@@ -7,7 +7,8 @@ This repository contains a Python reader that can be used as an interface for th
 ```python
 from benchmark_reader import BenchmarkReader
 reader = BenchmarkReader()
-reader.read_plu_file("../benchmarks/mux6.plu")
+reader.read_plu_file("../benchmarks/plu/mux6.plu")
+reader.benchmark.print_header()
 reader.benchmark.print()
 ```
 
