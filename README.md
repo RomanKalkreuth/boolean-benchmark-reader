@@ -9,7 +9,14 @@ This repository contains a Python reader that can be used as an interface for th
 > DOI: 10.1145/3594805.3607131.
 > URL: https://doi.org/10.1145/3594805.3607131,
 
+## Usage
 
+```python
+from benchmark_reader import BenchmarkReader
+reader = BenchmarkReader()
+reader.read_plu_file("../benchmarks/mux6.plu")
+reader.benchmark.print()
+```
 
 BibTex:
 
