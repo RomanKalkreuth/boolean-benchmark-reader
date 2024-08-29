@@ -58,7 +58,9 @@ class Benchmark:
         self.num_outputs = -1
         self.num_chunks = -1
         self.num_product_terms = -1
+
         self.model_name = ""
+        self.header_size = -1
 
     def clear(self) -> None:
         """
@@ -111,7 +113,7 @@ class Benchmark:
         :param index: index of the row
         :return: Vector containing a row of inputs
         """
-        max_index = len(self.inputs)
+        max_index = len(self.table.inputs)
         assert 0 <= index <= max_index, "Index is out of range!"
         return self.table.inputs[index]
 
@@ -141,6 +143,22 @@ class Benchmark:
             print(name + " ", end="")
 
         print('')
+
+    def print_header(self) -> None:
+        if len(self.model_name) > 0:
+            print("Model: %s " % self.model_name)
+
+        if self.num_inputs != -1:
+            print("Inputs: %d" % self.num_inputs)
+
+        if self.num_outputs != -1:
+            print("Outputs: %d" % self.num_outputs)
+
+        if len(self.table.input_names) > 0:
+            self.print_input_names()
+
+        if len(self.table.output_names) > 0:
+            self.print_output_names()
 
     def print(self) -> None:
         """
@@ -181,15 +199,6 @@ class BenchmarkReader:
         self.file = None
         self.PLU = 0
         self.TT = 1
-
-        # Variables for the meta information of a certain benchmark
-        self.num_inputs = -1
-        self.num_outputs = -1
-        self.num_chunks = -1
-        self.num_product_terms = -1
-
-        self.model_name = ""
-        self.header_size = -1
 
         # Create an TruthTable instance for the storage of the table data
         self.benchmark = Benchmark()
@@ -256,13 +265,11 @@ class BenchmarkReader:
             raise Exception("Keyword is empty!")
 
         self.file.seek(0)
+        line = ""
 
         for line in self.file:
             if keyword in line:
                 break
-        else:
-            # Just perform the default split the current line by whitespace
-            line_values = line.split()
 
         # Just perform the default split the current line by whitespace
         line_values = line.split()
@@ -273,16 +280,16 @@ class BenchmarkReader:
         return line_values[1]
 
     def read_num_inputs(self) -> None:
-        self.num_inputs = self.read_keyword(".i")
+        self.benchmark.num_inputs = int(self.read_keyword(".i"))
 
     def read_num_outputs(self) -> None:
-        self.num_outputs = self.read_keyword(".o")
+        self.benchmark.num_outputs = int(self.read_keyword(".o"))
 
     def read_num_product_terms(self) -> None:
-        self.num_product_terms = self.read_keyword(".p")
+        self.benchmark.num_product_terms = int(self.read_keyword(".p"))
 
     def read_model_name(self) -> None:
-        self.model_name = self.read_keyword(".model")
+        self.benchmark.model_name = self.read_keyword(".model")
 
     def read_names(self, keyword: str) -> array:
         if len(keyword) == 0:
@@ -313,67 +320,56 @@ class BenchmarkReader:
         self.benchmark.table.output_names.pop()
 
     def read_header(self) -> None:
-        self.header_size = 0
+        header_size = 0
 
         self.read_num_inputs()
 
-        if self.num_inputs != -1:
-            self.header_size += 1
+        if self.benchmark.num_inputs != -1:
+            header_size += 1
 
         self.read_num_outputs()
 
-        if self.num_outputs != -1:
-            self.header_size += 1
+        if self.benchmark.num_outputs != -1:
+            header_size += 1
 
         self.read_model_name()
 
-        if len(self.model_name) > 0:
-            self.header_size += 1
+        if len(self.benchmark.model_name) > 0:
+            header_size += 1
 
         self.read_input_names()
 
         if len(self.benchmark.table.input_names) > 0:
-            self.header_size += 1
+            header_size += 1
 
         self.read_output_names()
 
         if len(self.benchmark.table.output_names) > 0:
-            self.header_size += 1
+            header_size += 1
 
-    def print_header(self) -> None:
-        if len(self.model_name) > 0:
-            print("Model: %s ", (self.model_name))
-
-        if self.num_inputs != -1:
-            print("Inputs: %d", (self.num_inputs))
-
-        if self.num_outputs != -1:
-            print("Outputs: %d", (self.num_outputs))
-
-        if len(self.benchmark.table.input_names) > 0:
-            self.benchmark.print_input_names()
-
-        if len(self.benchmark.table.output_names) > 0:
-            self.benchmark.print_output_names()
+        self.benchmark.header_size = header_size
 
     def read_tt_file(self, file_path: str) -> None:
-        # Determine the file format
-        file_format = self.file_format(file_path)
-
         self.benchmark.table.compressed = False
-        self.file.seek(0)
+
+        # First, validate the file path
+        self.validate_file_path(file_path)
 
         input_row = []
         output_row = []
+        line = ""
 
-        # Read in the input/output data until the end of the
-        # table data is reached
+        # Open the file for reading
+        self.open_file(file_path)
+        self.read_header()
 
         i = 0
-        while i <= self.header_size:
+        while i <= self.benchmark.header_size:
             line = self.file.readline()
             i += 1
 
+        # Read in the input/output data until the end of the
+        # table data is reached
         while '.end' not in line:
             # Just perform the default split the current line by whitespace
             line_split = line.split()
@@ -408,15 +404,12 @@ class BenchmarkReader:
         The procedures for the reading process differ in the header size and the format
         of each row of the truth table.
 
-        :param file_path: Path of the PLU/PLA file
+        :param file_path: Path of the PLU/TT file
         :return: None
         """
 
         # First, validate the file path
         self.validate_file_path(file_path)
-
-        # Determine the file format
-        file_format = self.file_format(file_path)
 
         # Lists for the header and input/output rows
         header = []
@@ -428,25 +421,25 @@ class BenchmarkReader:
         self.benchmark.compressed = True
 
         # Open the file for reading
-        f = open(file_path, 'r')
+        self.open_file(file_path)
 
         # Read in the header
         i = 0
         while i < header_size:
-            line = f.readline()
+            line = self.file.readline()
             identifier, value = line.split()
             header.append(value)
             i += 1
 
         # Store the meta information of the header
         # in the respective member variables
-        self.num_inputs = header[0]
-        self.num_outputs = header[1]
-        self.num_chunks = header[2]
+        self.benchmark.num_inputs = int(header[0])
+        self.benchmark.num_outputs = int(header[1])
+        self.benchmark.num_chunks = int(header[2])
 
         # Read in the input/output data until the end of the
         # table data is reached
-        line = f.readline()
+        line = self.file.readline()
         while '.e' not in line:
 
             # Just perform the default split the current line by whitespace
@@ -456,7 +449,7 @@ class BenchmarkReader:
             for index, value in enumerate(line_values):
                 # Depending on the number of inputs and outputs,
                 # store them in the respective row vectors
-                if index < int(self.num_inputs):
+                if index < int(self.benchmark.num_inputs):
                     input_row.append(value)
                 else:
                     output_row.append(value)
@@ -470,14 +463,5 @@ class BenchmarkReader:
             output_row.clear()
 
             # Continue the iteration with the next line of the file
-            line = f.readline()
-
-        f.close()
-
-    def print(self):
-        """
-        Calls the print method in the TruthTable class.
-
-        :return: None
-        """
-        self.benchmark.print()
+            line = self.file.readline()
+        self.close_file()
