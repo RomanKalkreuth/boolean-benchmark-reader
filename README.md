@@ -2,13 +2,6 @@
 
 This repository contains a Python reader that can be used as an interface for the benchmarks of the General Boolean Function Benchmark Suite (GBFS). GBFS provides a benchmark that can be used to evaluate the search performance and robustness of heuristic methods in logic synthesis. The corresponding paper has been presented at the 17th ACM/SIGEVO Conference on Foundations of Genetic Algorithms (FOGA'23) last year.
 
-## Reference
-
-> Kalkreuth et al.: General Boolean Function Benchmark Suite,
-> FOGA'23: Proceedings of the 17th ACM/SIGEVO Conference on Foundations of Genetic Algorithms,
-> DOI: 10.1145/3594805.3607131.
-> URL: https://doi.org/10.1145/3594805.3607131,
-
 ## Usage
 
 ```python
@@ -17,6 +10,13 @@ reader = BenchmarkReader()
 reader.read_plu_file("../benchmarks/mux6.plu")
 reader.benchmark.print()
 ```
+
+## Reference
+
+> Kalkreuth et al.: General Boolean Function Benchmark Suite,
+> FOGA'23: Proceedings of the 17th ACM/SIGEVO Conference on Foundations of Genetic Algorithms,
+> DOI: 10.1145/3594805.3607131.
+> URL: https://doi.org/10.1145/3594805.3607131,
 
 BibTex:
 
