@@ -48,7 +48,7 @@ class TruthTable:
 
 class Benchmark:
     """
-
+    Class for representing a logic synthesis benchmark.
     """
     def __init__(self):
         self.table = TruthTable()
