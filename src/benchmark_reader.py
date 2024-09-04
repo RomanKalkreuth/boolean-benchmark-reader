@@ -12,6 +12,8 @@ from os import path
 from dataclasses import dataclass
 import array
 
+#TODO Getter and Setter, Representation methods
+
 __author__ = "Roman Kalkreuth"
 
 @dataclass
@@ -34,6 +36,10 @@ class TruthTable:
         self.output_names = []
 
         self.compressed = False
+
+    def __repr__(self):
+
+    def __len__(self):
 
     def clear(self):
         """
