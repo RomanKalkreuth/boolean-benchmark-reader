@@ -4,12 +4,21 @@ This repository contains a reader and evaluator for the benchmarks of the Genera
 
 ## Usage
 
+### Benchmark Reader 
+
 ```python
 from benchmark_reader import BenchmarkReader
 reader = BenchmarkReader()
 reader.read_plu_file("../benchmarks/plu/mux6.plu")
 reader.benchmark.print_header()
 reader.benchmark.print()
+```
+
+### Benchmark Evalutor 
+```python
+from benchmark_evaluator import BenchmarkEvaluator
+evaluator = BenchmarkEvaluator()
+evaluator.evaluate(x, y, compressed, chunk_size) 
 ```
 
 ## Reference
