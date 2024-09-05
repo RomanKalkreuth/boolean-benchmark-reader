@@ -1,4 +1,4 @@
-## Boolean Benchmark Reader for GBFS
+## Boolean Benchmark Tools for GBFS
 
 This repository contains a reader and evaluator for the benchmarks of the General Boolean Function Benchmark Suite (GBFS). GBFS provides a benchmark that can be used to evaluate the search performance and robustness of heuristic methods in logic synthesis. The corresponding paper has been presented at the 17th ACM/SIGEVO Conference on Foundations of Genetic Algorithms (FOGA'23) last year.
 
