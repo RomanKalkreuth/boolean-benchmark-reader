@@ -18,7 +18,7 @@ reader.benchmark.print()
 ```python
 from benchmark_evaluator import BenchmarkEvaluator
 evaluator = BenchmarkEvaluator()
-evaluator.evaluate(x, y, compressed, chunk_size) 
+evaluator.evaluate(x, y, compressed = True/False, chunk_size = NBITS) 
 ```
 
 ## Reference
