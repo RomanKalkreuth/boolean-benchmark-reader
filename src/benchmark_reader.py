@@ -1,5 +1,6 @@
 """
-Provides a reader that can be used as an interface for the benchmarks of the General Boolean Function Benchmark Suite (GBFS):
+Provides a reader that can be used as an interface for the benchmarks of the
+General Boolean Function Benchmark Suite (GBFS):
 https://dl.acm.org/doi/abs/10.1145/3594805.3607131
 
 The architecture is based on three classes implemented in the file
@@ -12,7 +13,7 @@ from os import path
 from dataclasses import dataclass
 import array
 
-#TODO Getter and Setter, Representation methods
+#TODO Implement getter and setter, internal methods __repr__ and __len__
 
 __author__ = "Roman Kalkreuth"
 
@@ -36,10 +37,6 @@ class TruthTable:
         self.output_names = []
 
         self.compressed = False
-
-    def __repr__(self):
-
-    def __len__(self):
 
     def clear(self):
         """
