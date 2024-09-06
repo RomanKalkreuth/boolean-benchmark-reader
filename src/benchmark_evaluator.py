@@ -31,7 +31,7 @@ class BenchmarkEvaluator:
         :param x: list with output values from the candidate model or program
         :param y: list with real output values 
         :compressed: status of truthtable (compressed or uncompressed)
-        :chunk_size: number of bits for each chunk of an uncompressed truth table
+        :bit_length: number of bits for each chunk of an uncompressed truth table
         """
         dist = 0
         if compressed:
